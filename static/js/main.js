@@ -5,7 +5,33 @@ async function generateName() {
         return;
     }
 
+    // 显示加载动画
+    const loadingDiv = document.getElementById('loading');
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '';
+    loadingDiv.style.display = 'block';
+
+    // 开始加载动画
+    const steps = document.querySelectorAll('.loading-step');
+    let currentStep = 0;
+    
+    const animateSteps = async () => {
+        if (currentStep > 0) {
+            steps[currentStep - 1].classList.remove('active');
+            steps[currentStep - 1].classList.add('completed');
+        }
+        if (currentStep < steps.length) {
+            steps[currentStep].classList.add('active');
+            currentStep++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return animateSteps();
+        }
+    };
+
     try {
+        // 启动加载动画
+        animateSteps();
+
         const response = await fetch('/generate', {
             method: 'POST',
             headers: {
@@ -20,10 +46,21 @@ async function generateName() {
             return;
         }
 
+        // 等待最后一个动画完成
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 隐藏加载动画
+        loadingDiv.style.display = 'none';
+        // 重置加载状态
+        steps.forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+
         displayResults(data.names);
     } catch (error) {
         console.error('Error:', error);
         alert('An error occurred while generating names');
+        loadingDiv.style.display = 'none';
     }
 }
 
@@ -43,10 +80,6 @@ function displayResults(names) {
             <div class="cultural-explanation">
                 <strong>Cultural Explanation:</strong><br>
                 ${name.cultural_explanation}
-            </div>
-            <div class="personality">
-                <strong>Personality Traits:</strong><br>
-                ${name.personality_traits}
             </div>
             <div class="english-explanation">
                 <strong>English Explanation:</strong><br>
