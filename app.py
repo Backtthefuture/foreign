@@ -3,6 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from name_generator import GLMNameGenerator
 import traceback
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 app = Flask(__name__)
 # 使用相对路径
@@ -39,38 +43,27 @@ def generate():
                 'names': [{
                     'chinese_name': '李友好',
                     'pinyin': 'lǐ yǒu hǎo',
-                    'meaning': '友善和美好',
+                    'meaning': '友善和美好的人',
                     'cultural_explanation': '李是常见姓氏，友好表示友善美好之意',
-                    'personality_traits': ['友善', '温和', '善良'],
                     'english_explanation': 'A name representing friendliness and kindness'
                 }]
             }), 200
 
         # 使用GLM生成名字
         result = name_generator.generate_names(english_name)
-        
-        # 确保result中包含names字段
-        if 'names' not in result or not result['names']:
-            raise ValueError('生成的名字格式不正确')
-            
-        return jsonify(result)
-    
+        return jsonify(result), 200
+
     except Exception as e:
-        print(f"Error generating names: {str(e)}")
-        print(traceback.format_exc())  # 打印详细的错误堆栈
-        
-        # 返回一个默认响应而不是错误状态
+        print(f"Error: {str(e)}")
+        traceback.print_exc()
         return jsonify({
-            'error': '生成名字时出现错误，已返回默认名字',
-            'names': [{
-                'chinese_name': '李友好',
-                'pinyin': 'lǐ yǒu hǎo',
-                'meaning': '友善和美好',
-                'cultural_explanation': '李是常见姓氏，友好表示友善美好之意',
-                'personality_traits': ['友善', '温和', '善良'],
-                'english_explanation': 'A name representing friendliness and kindness'
-            }]
-        }), 200
+            'error': '生成名字时出错',
+            'message': str(e)
+        }), 500
+
+# Vercel需要的应用实例
+app.debug = False
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    # 本地运行时使用
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5001)))
