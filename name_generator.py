@@ -3,10 +3,16 @@ import json
 import requests
 from typing import Dict, List
 import time
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 class GLMNameGenerator:
     def __init__(self):
-        self.api_key = "3da54b4b6c74c07390875f6981df88dc.D9LxP7hOlMyDbXvG"
+        self.api_key = os.getenv('API_KEY')
+        if not self.api_key:
+            raise ValueError("API_KEY environment variable is not set")
         self.base_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
         self.model = "glm-4-flash"
         

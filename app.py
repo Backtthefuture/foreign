@@ -27,7 +27,11 @@ with app.app_context():
     db.create_all()
 
 # 创建GLM名字生成器实例
-name_generator = GLMNameGenerator()
+try:
+    name_generator = GLMNameGenerator()
+except Exception as e:
+    print(f"Error initializing name generator: {str(e)}")
+    name_generator = None
 
 @app.route('/')
 def index():
@@ -36,6 +40,9 @@ def index():
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
+        if name_generator is None:
+            raise Exception("Name generator not initialized. Please check API_KEY environment variable.")
+
         english_name = request.json.get('name', '').strip()
         if not english_name:
             return jsonify({
@@ -54,12 +61,27 @@ def generate():
         return jsonify(result), 200
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        error_msg = str(e)
+        print(f"Error: {error_msg}")
+        print("Full traceback:")
         traceback.print_exc()
-        return jsonify({
-            'error': '生成名字时出错',
-            'message': str(e)
-        }), 500
+        
+        # 根据错误类型返回不同的错误信息
+        if "API_KEY" in error_msg:
+            return jsonify({
+                'error': 'API配置错误，请检查环境变量设置',
+                'message': error_msg
+            }), 500
+        elif "network" in error_msg.lower():
+            return jsonify({
+                'error': '网络连接错误，请稍后重试',
+                'message': error_msg
+            }), 500
+        else:
+            return jsonify({
+                'error': '生成名字时出错',
+                'message': error_msg
+            }), 500
 
 # Vercel需要的应用实例
 app.debug = False
